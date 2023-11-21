@@ -1,0 +1,368 @@
+#To edit and compare internal_properties, use WINDEV integrated tools.
+#Internal properties refer to the properties of controls in windows, reports, etc.
+info :
+ name : pGlobal
+ major_version : 28
+ minor_version : 0
+ type : 7
+ description : ""
+ subtype : 0
+procedure_set :
+ identifier : 0x1857f6d700a3575e
+ internal_properties : CAAAAAgAAABGLu41kG7fjQV3iS4F72qmnKaNh5694reolNKIW0iw
+ code_elements :
+  internal_properties : CAAAAAgAAAC+F0/kmiASuyb8pHTyMcvDHgryGO//j9TtEooEYVquI0DbQ0vsKCXVTpQvZ2kc+PXIaTrT49yokeJF2XLQjuwHytKvAzd4lCuYj8GI0uc3vO7HTdlDOicqVEK13nTBq24ugZMtKrcOPDS+vER2v2eGC5l2CAGa
+  type_code : 31
+  p_codes :
+   -
+     internal_properties : CAAAAAgAAAA7m6mA3N5WTpmBHSsK8XB6oT6EdJK5RaQbrAEuYYPUvEl1ZFol/44NVFo0ULONdQnLLLy9DC+421OevrK5Rmx+CowCvkfOY+Y6o4vuGDijiUd0AW/C1itK3kvV74ZSMWFBw+K97Exn7Gcp1D+VkdGnmLZY7F6gR/WS17WRstvRx1rKWKGaPLmyxY83o8W41Bc=
+     code : |1-
+      STScan is Structure
+      	nColor is int // Color used: Black and White, Grayscale or Color
+      	sScan is string // Name of the TWAIN device						
+      	sPrinter is string // Printer Name
+      	rLightness is real // Lightness (light or dark), value included between -1000 and 1000				
+      	nScale is int // Format of the copy, reduce or increase factor (from 33% to 200%)
+      	sNameTempFile is string // Name of the temporary file
+      	bPreview is boolean // Asks for the print preview
+      	nNbCopy is int // Number of photocopies
+      	nResolution is int // Resolution of the image (300 in black and white, 150 in grayscale and color)
+      	nNbBit is int // Set to 1 for black and white, set to 16 for grayscale and RGB
+      END
+      
+      // Declare the constant
+      CONSTANT
+      	pDefault = 1 // constant, default parameter
+      	pParam = 2 // constant, use the custom parameters
+      	
+      	
+      	// Name of parameters
+      	PARAM_TWAIN = "TWAIN"
+      	PARAM_PRINTER = "PRINTER"
+      	PARAM_LIGHTNESS = "LIGHTNESS"
+      	PARAM_SCALE = "SCALE"
+      	PARAM_COLORMODE = "COLORMODE"
+      	PARAM_PRINTER_BW = "PRINTER_BW"
+      	PARAM_PRINTER_GS = "PRINTER_GS"
+      	PARAM_PRINTER_COLOR = "PRINTER_COLOR"
+      	PARAM_RESOLUTION_BW = "RESOLUTION_BW"
+      	PARAM_RESOLUTION_GS = "RESOLUTION_GS"
+      	PARAM_RESOLUTION_COLOR = "RESOLUTION_COLOR"
+      	
+      END
+      
+      // Declare a STScan variable
+      gstPhotocopy is STScan
+     type : 720896
+   -
+     code : |1-
+      
+     type : 720898
+  procedures :
+   -
+     name : CopyWithInterface
+     procedure_id : 1754141983173269342
+     type_code : 15
+     code : |1-
+      // Description of input/output parameters of 'CopyWithInterface':
+      //
+      // Syntax:
+      //[ <Result> = ] CopyWithInterface ()
+      //
+      // Parameters:
+      //	None
+      // Return value:
+      // 	variant: True if the photocopy was performed, False otherwise
+      // Notes:
+      // Present the operating mode.
+      // Opens an interface used to customize the photocopy by specifying the printer to use, the lightness, the color, etc..
+      //
+      // Example:
+      // If CopyWithInterface() then
+      // 		info("The photocopy was successfully performed")
+      // ELSE
+      //		info("The photocopy was canceled")
+      // End
+      //
+      
+      PROCEDURE CopyWithInterface()
+      
+      // Open the window used to configure the photocopy.
+      RESULT Open(WIN_Photocopier)
+     type : 458752
+   -
+     name : Photocopying
+     internal_properties : CAAAAAgAAABw+OWpwYej+fJtykhVjkHqnwL90+yB2VUYeHwU19OO0yLaVo5NIuCYqujxgjoTi338JTc6zd1FTMdKBhwsEjLI69+47cSJJV1otymRT7sfm6Tv9EoKfS69dRolJeIDVzbEEySwcXRcBw8CPT4n4SZTajhOw132vdKPTAsT0FD8KZi6/GAdSndiGHVH5aDEnTbW8AH0H9u1bRD/VRn+oSV7ITpSjoYT
+     procedure_id : 1754141983173334878
+     type_code : 15
+     code : |1-
+      // Description of input/output parameters of 'Photocopying':
+      //
+      // Syntax:
+      //[ <Result> = ] Photocopying ()
+      //
+      // Parameters:
+      //	None
+      // Return value:
+      // 	boolean: True if the photocopy was successfully performed, False otherwise
+      // Notes:
+      // Digitizes and prints 
+      //
+      
+      
+      PROCEDURE RESTRICTED Photocopying()
+      
+      bReturn is boolean = False // Return of Twain function
+      PageNum is int  = 1 // Number of pages scanned 
+      tTabScannedImage is array dynamic of 1 strings // Table used to list all the scanned images
+      nBound is int
+      
+      
+      // *********** digitize and print *******************
+      // Acquisition as long as there are pages to load
+      LOOP
+      	
+      	// digitize and save in a file
+      	bReturn = TwainToBMP(gstPhotocopy:sNameTempFile+NumToString(PageNum)+".bmp", False, gstPhotocopy:nColor, gstPhotocopy:nNbBit, gstPhotocopy:nResolution, 0, gstPhotocopy:rLightness)
+      	// save the name and path of the scanned file
+      	tTabScannedImage[PageNum] = gstPhotocopy:sNameTempFile+NumToString(PageNum)+".bmp"
+      	// if the Twain manager is not loaded: exit, no other pages to scan.
+      	IF TwainState() = tsUnloaded THEN BREAK
+      	// Next page to scan
+      	PageNum++
+      	// Increase the size of the array to store the names of the new images.
+      	Dimension(tTabScannedImage, ArrayInfo(tTabScannedImage, tiDimension) +1)
+      	
+      END
+      
+      // Retrieves the size of the source.
+      IF gstPhotocopy:nScale <> 100 THEN
+      	x1 is real = (TwainSourceHeight() * gstPhotocopy:nScale) /100
+      	y1 is real = (TwainSourceWidth() * gstPhotocopy:nScale) /100
+      ELSE
+      	x1 = TwainSourceWidth()
+      	y1 = TwainSourceHeight()
+      END
+      
+      // If the digitize operation was successful
+      IF bReturn THEN
+      	// Print the image
+      	
+      	// If a print preview was requested 
+      	IF gstPhotocopy:bPreview THEN 
+      		
+      		nBound = ArrayInfo(tTabScannedImage, tiTotalNumber)
+      		// Preview page by page
+      		FOR i = 1 TO nBound
+      			iPreview(i100)
+      			iPrintImage(tTabScannedImage[i], 0, 0, x1, y1, gstPhotocopy:nScale)
+      			iEndPrinting()
+      		END
+      		
+      	ELSE
+      		
+      		nBound = ArrayInfo(tTabScannedImage, tiTotalNumber)
+      		// Print the scanned document, without preview.
+      		FOR i = 1 TO nBound
+      			iParameter(iCopies, Val(gstPhotocopy:nNbCopy))
+      			iPrintImage(tTabScannedImage[i], 0, 0, x1, y1, gstPhotocopy:nScale)
+      			iEndPrinting()
+      		END
+      		
+      	END
+      	
+      	// The photocopy was successfully performed
+      	RESULT True 
+      	
+      ELSE
+      	
+      	// Abandon
+      	RESULT False
+      	
+      END
+      
+      END:
+      
+      // Deleting the temporary files
+      nBound = ArrayInfo(tTabScannedImage, tiTotalNumber)
+      FOR i = 1 TO nBound
+      	fDelete(tTabScannedImage[i], frReadOnly)
+      END
+     type : 458752
+   -
+     name : DirectCopy
+     internal_properties : CAAAAAgAAABwHzXB5vfx/ObmWdF4tMd4x7LjdeOqy8EAFo3xybaAovQMTEgMZlYdVJ3UAbp5A3X/MECifKK59HbX7P72JBp2XYQ1oaoERvIrwAI1mcpXvdS2O9ap3ZiTUo17WOt5i+ZmCXvWWJhAV5gBUSEmkbYnomTDn3K6kUqgkw86Gb4aNwCWpT4g/Dv6kUwzyMHuSGchvmvvnVz/hVTlvQFSBAUBcuL9ig==
+     procedure_id : 1754141983173400414
+     type_code : 15
+     code : |1+
+      // Description of input/output parameters of 'DirectCopy':
+      //
+      // Syntax:
+      //[ <Result> = ] DirectCopy ([<pDefault> is int [, <sPrinter> is string [, <sScanner> is string [, <nNbCop> is int [, <bPrevi> is boolean [, <nScale> is int [, <nColor> is int [, <rBrightness> is real]]]]]]]])
+      //
+      // Parameters:
+      //	nDefault (integer - default value=1): Indicate pDefault (1) to use the initial parameters or pParam (2) to use custom parameters
+      //	sPrinter (ANSI string - default value=""): Specify the name of the printer to use. The default printer will be used if this parameter is not specified
+      //	sScanner (ANSI string - default value=""): Specify the name of the Twain device to use. If this parameter is not specified: - if it is the first use, the window for twain selection is displayed - if it is not the first use, the twain used is the one saved during the last use
+      //	nNbCop (integer - default value=1): Specify the number of photocopies to print (1 by default)
+      //	bPrevi (boolean - default value=0): Specify whether you want to get a print preview (False by default, no print preview is performed)
+      //	nScale (integer - default value=100): Specify the scale between 33 and 200 (100 by default)
+      //	nColor (integer - default value=1): Indicate whether you want to print in Black&White: TwainBlackWhite, Grayscale: TwainGrayScale, Color: TwainRGB
+      //	rBrightness (real - default value=0): Specify the brightness. Real between -1000 (very dark) and 1000 (very light)
+      // Return value:
+      // 	boolean: Returns True if the photocopy was successfully performed, False otherwise
+      // Notes:
+      // During the first use, the user will be asked to select the name of the Twain device to use.
+      // Case of use without parameter: call the procedure without specifying the parameters, the default values will be used
+      //
+      // Case of use with parameters: you can specify some parameters and keep some default values.
+      // 
+      // Example:
+      // Case without parameter: 
+      // If DirectCopy(pDefault) then
+      //		info("The photocopy was successfully performed")
+      // otherwise
+      // 		Error("The photocopy was not performed")
+      // end
+      //
+      // Case with parameters:
+      // You can for instance modify the number of copies and the color while keeping the other parameters.
+      // NumberOfCopy is int 
+      // If DirectCopy(pParam,*,*,NumberOfCopy,*,*,TwainRGB) then
+      //		info("The photocopy was successfully performed")
+      // otherwise
+      // 		Error("The photocopy was not performed")
+      // end
+      //
+      
+      PROCEDURE DirectCopy(nDefault is int = pDefault, sPrinter is string = "", sScan is string = "", nNbCop is int = 1, bPrevi is boolean = False, nScale is int = 100, nColor is int = TwainBlackWhite, rBrightness is real = 0)
+      
+      SWITCH nDefault
+      	CASE pDefault : 
+      		InitComponent()
+      		
+      	CASE pParam :
+      		// If one of the parameters is specified, it is retrieved ; otherwise, use the default parameters
+      		// Printer Name
+      		IF sPrinter <> "" THEN gstPhotocopy:sPrinter = sPrinter
+      		// Name of scanner
+      		IF sScan <> "" THEN gstPhotocopy:sScan = sScan
+      		// Number of copies
+      		IF nNbCop > 0 THEN gstPhotocopy:nNbCopy = nNbCop
+      		// Print preview or not?
+      		IF bPrevi <> False THEN gstPhotocopy:bPreview = bPrevi
+      		// Scale
+      		IF nScale <> 100 _AND_ nScale >= 33 _AND_ nScale <= 200 THEN gstPhotocopy:nScale = nScale
+      		//Choose the mode
+      		SWITCH nColor
+      			CASE TwainBlackWhite
+      				gstPhotocopy:nColor = nColor
+      				gstPhotocopy:nResolution = 300
+      				gstPhotocopy:nNbBit = 1
+      			CASE TwainGrayScale
+      				gstPhotocopy:nColor = nColor
+      				gstPhotocopy:nResolution = 150
+      				gstPhotocopy:nNbBit = 16
+      			CASE TwainRGB
+      				gstPhotocopy:nColor = nColor
+      				gstPhotocopy:nResolution = 150
+      				gstPhotocopy:nNbBit = 16
+      		END
+      		// Define the lightness
+      		IF rBrightness <> 0 _AND_ rBrightness >=-1000 _AND_ rBrightness <= 1000 THEN gstPhotocopy:rLightness = rBrightness
+      		
+      END
+      
+      // If it is the first use 
+      IF gstPhotocopy:sScan = "" THEN
+      	
+      	// Display the list of twain devices
+      	IF TwainSelectSource() = False THEN
+      		RESULT False
+      	ELSE
+      		// Retrieve the selected Twain device
+      		gstPhotocopy:sScan = TwainCurrentSource()
+      		// Save the name of the Twain device
+      		SaveParameter(PARAM_TWAIN, TwainCurrentSource())
+      	END
+      	
+      END
+      
+      IF Photocopying() THEN
+      	RESULT True
+      ELSE
+      	RESULT False
+      END
+     type : 458752
+   -
+     name : InitComponent
+     internal_properties : CAAAAAgAAAC6NeawMz5paVgYNyl29NuewfaGWs5hRQaiZIzxCdISE3zR28IJ7BCRInr2EB64eU6ikl5j3ihNAzrmdeZUJkx5qVK49NiQLxbAyMKHL+R76HlWtmjofUJhL4Rf50KXD65eRVYmzxC8Z6tu2YLrCyaLFAIImScIq9CLCDcroGAo1cUPtzVGcdCtW3BS4kdLnjXH9AfmOVI=
+     procedure_id : 1754141983173465950
+     type_code : 15
+     code : |1+
+      // Description of input/output parameters of 'InitComponent':
+      //
+      // Syntax:
+      //InitComponent ()
+      //
+      // Parameters:
+      //	None
+      // Return value:
+      // 	None
+      // Notes:
+      // initialize the component with the default settings.
+      //
+      
+      PROCEDURE PRIVATE InitComponent()
+      
+      // Initialize the Structure structure
+      gstPhotocopy:nColor = LoadParameter(PARAM_COLORMODE, TwainBlackWhite) // Type to scan (default value: black and white)
+      gstPhotocopy:nResolution = LoadParameter(PARAM_RESOLUTION_BW, 300) // Default resolution for an image in Black and White
+      gstPhotocopy:nNbBit = 1 // Default value for the number of bits per pixel for Black and White
+      gstPhotocopy:nScale = LoadParameter(PARAM_SCALE, 100) // Included between 33 and 200 (default value: 100)
+      gstPhotocopy:sPrinter = LoadParameter(PARAM_PRINTER,iInfoPrinter(False)) // Retrieve the characteristics of the default printer
+      gstPhotocopy:rLightness = 0 // Included between -1000 and 1000 (setting in the middle by default)
+      gstPhotocopy:sNameTempFile = fExeDir()+<§@13830cac0001e0190008§> // Name and path (without extension) of the scanned temporary file
+      gstPhotocopy:sScan = LoadParameter(PARAM_TWAIN, "") // The twain device to use is not known
+      gstPhotocopy:bPreview = False // No print preview by default
+      gstPhotocopy:nNbCopy = 1 // A single copy is printed
+     type : 458752
+  procedure_templates : []
+  property_templates : []
+ code_parameters :
+  internal_properties : CAAAAAgAAACVGQgYbalU7DKC3oH4ItDrjtcTHXXV/EuH8q0IbhyQlw==
+resources :
+ string_res :
+  identifier : 0x13830cac0001e019
+  internal_properties : CAAAAAgAAACm76HWfKGWp33VjXInA4cRlqArlgTTA862QGt72W2ld5Y=
+  strings :
+   -
+     text :
+      en-GB : Photocopy
+     index : 0
+   -
+     text :
+      en-GB : Cancel
+     index : 1
+   -
+     text :
+      en-GB : TwainName
+     index : 4
+   -
+     text :
+      en-GB : ColorParam
+     index : 5
+   -
+     text :
+      en-GB : ResolutionBW
+     index : 6
+   -
+     text :
+      en-GB : Scale
+     index : 7
+   -
+     text :
+      en-GB : WDS
+     index : 8
+custom_note :
+ internal_properties : CAAAAAgAAABtB9HWVzrXO2+4NDRVK0vmzaNKrCKqH1DBX30lMmGZ
